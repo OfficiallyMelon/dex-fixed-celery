@@ -4813,7 +4813,7 @@ local function main()
 	Lib.FetchCustomAsset = function(url,filepath)
 		if not env.writefile then return end
 
-		local s,data = pcall(game.HttpGet,game,url)
+		local s,data = pcall(game.Get,game,url)
 		if not s then return end
 
 		env.writefile(filepath,data)
@@ -10354,7 +10354,7 @@ Main = (function()
 
         -- other
         --env.setfflag = setfflag
-        env.request = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+        env.request = (syn and syn.request) or ( and http.request) or http_request or (fluxus and fluxus.request) or request
         env.decompile = decompile or (env.getscriptbytecode and env.request and env.base64encode and function(scr)
             local s, bytecode = pcall(env.getscriptbytecode, scr)
             if not s then
@@ -11096,7 +11096,7 @@ Main = (function()
 					Main.RobloxVersion = Main.DepsVersionData[2]
 				end
 			end
-			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("http://setup.roblox.com/versionQTStudio")
+			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("https://clientsettingscdn.roblox.com/v1/client-version/WindowsPlayer")
 		end
 		
 		-- Fetch external deps
