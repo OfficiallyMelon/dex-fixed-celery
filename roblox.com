@@ -6836,7 +6836,7 @@ local function main()
 			["unpack"] = true,
 			["xpcall"] = true,
 			["_G"] = true,
-			["_VERSION"] = true,
+			["_"] = true,
 			["coroutine"] = true,
 			["debug"] = true,
 			["math"] = true,
@@ -11096,7 +11096,7 @@ Main = (function()
 					Main.RobloxVersion = Main.DepsVersionData[2]
 				end
 			end
-			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("http://setup.roblox.com/versionQTStudio")
+			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("https://clientsettingscdn.roblox.com/v1/client-version/WindowsPlayer")
 		end
 		
 		-- Fetch external deps
