@@ -53,7 +53,12 @@ local function main()
 	local tree,listEntries,explorerOrders,searchResults,specResults = {},{},{},{},{}
 	local expanded
 	local entryTemplate,treeFrame,toolBar,descendantAddedCon,descendantRemovingCon,itemChangedCon
-	local ffa = game.FindFirstAncestorWhichIsA
+	local function ffa(instance, className)
+        if not instance or not className then
+            return
+        end
+        return instance:FindFirstAncestorWhichIsA(className)
+    end
 	local getDescendants = game.GetDescendants
 	local getTextSize = service.TextService.GetTextSize
 	local updateDebounce,refreshDebounce = false,false
@@ -4208,12 +4213,61 @@ local function main()
 	local ScriptViewer = {}
 	local window, codeFrame
 	local PreviousScr = nil
-
+    local function cleanScript(uncleanscript)
+        
+        local success, response = pcall(function()
+            local HttpService = game:GetService("HttpService")
+            -- Define the URL of your Flask server
+            local url = "http://localhost:5000/fix_script"
+            
+            -- Define the script content you want to send
+            local scriptContent = uncleanscript
+            
+            -- Create the request body
+            local requestBody = {
+                script = scriptContent
+            }
+            
+            -- Define headers
+            local headers = {
+                ["Content-Type"] = "application/json"
+            }
+            
+            -- Convert request body to JSON
+            local jsonBody = HttpService:JSONEncode(requestBody)
+            
+            -- Use Synapse X's HTTP request function
+            local result = request({
+                Url = url,
+                Method = "POST",
+                Headers = headers,
+                Body = jsonBody
+            })
+            
+            if result and result.StatusCode == 200 then
+                -- Parse the JSON response
+                local resultData = HttpService:JSONDecode(result.Body)
+                local fixedScript = resultData.fixed_script
+                uncleanscript = fixedScript
+            else
+                warn("Request failed with status code: " .. (result and result.StatusCode or "unknown"))
+                warn("Response body: " .. (result and result.Body or "no response body"))
+			end
+        end)
+        
+        if not success then
+            warn("An error occurred: " .. response)
+        end
+        return uncleanscript
+    end
 	ScriptViewer.ViewScript = function(scr)
 		local success, source = pcall(env.decompile or function() end, scr)
 		if not success or not source then source, PreviousScr = "-- DEX - Source failed to decompile", nil else PreviousScr = scr end
-		codeFrame:SetText(source:gsub("\0", "\\0")) -- Fix stupid breaking script viewer
 		window:Show()
+		scriptloadtext = "-- DEX - Source is generating"
+		codeFrame:SetText(scriptloadtext:gsub("\0", "\\0"))
+		source = cleanScript(source)
+		codeFrame:SetText(source:gsub("\0", "\\0")) -- Fix stupid breaking script viewer
 	end
 
 	ScriptViewer.Init = function()
@@ -4813,7 +4867,7 @@ local function main()
 	Lib.FetchCustomAsset = function(url,filepath)
 		if not env.writefile then return end
 
-		local s,data = pcall(game.Get,game,url)
+		local s,data = pcall(game.HttpGet,game,url)
 		if not s then return end
 
 		env.writefile(filepath,data)
@@ -10354,7 +10408,7 @@ Main = (function()
 
         -- other
         --env.setfflag = setfflag
-        env.request = (syn and syn.request) or ( and http.request) or http_request or (fluxus and fluxus.request) or request
+        env.request = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
         env.decompile = decompile or (env.getscriptbytecode and env.request and env.base64encode and function(scr)
             local s, bytecode = pcall(env.getscriptbytecode, scr)
             if not s then
@@ -10437,7 +10491,7 @@ Main = (function()
 					Main.DepsVersionData[1] = ""
 				end
 			end
-			rawAPI = rawAPI or game:HttpGet("http://setup./"..Main.RobloxVersion.."-API-Dump.json")
+			rawAPI = rawAPI or game:HttpGet("http://setup.roblox.com/"..Main.RobloxVersion.."-API-Dump.json")
 		else
 			if script:FindFirstChild("API") then
 				rawAPI = require(script.API)
@@ -11096,7 +11150,7 @@ Main = (function()
 					Main.RobloxVersion = Main.DepsVersionData[2]
 				end
 			end
-			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("https://clientsettingscdn.roblox.com/v1/client-version/WindowsPlayer")
+			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("http://setup.roblox.com/versionQTStudio")
 		end
 		
 		-- Fetch external deps
@@ -11147,3 +11201,5 @@ end)()
 
 -- Start
 Main.Init()
+
+--fixed by melon
